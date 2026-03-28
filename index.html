@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarTrust AI — Used Car Verification</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#111118; --surface2:#18181f;
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+    --accent:#e8ff47; --accent2:#47d4ff; --accent3:#ff6b47;
+    --accent-dim:rgba(232,255,71,0.10);
+    --text:#f0f0f8; --text2:#8888a0; --text3:#55556a;
+    --safe:#47ff8c; --safe-bg:rgba(71,255,140,0.08);
+    --warn:#ffd447; --warn-bg:rgba(255,212,71,0.08);
+    --risk:#ff4747; --risk-bg:rgba(255,71,71,0.08);
+    --r:12px; --r2:20px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:900px;height:600px;background:radial-gradient(ellipse,rgba(232,255,71,0.04) 0%,transparent 70%);pointer-events:none;z-index:0;}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 40px;background:rgba(10,10,15,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+  .logo{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-0.5px;}
+  .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .logo span{color:var(--accent);}
+  .nav-links{display:flex;gap:28px;}
+  .nav-links a{color:var(--text2);text-decoration:none;font-size:14px;font-weight:500;transition:color 0.2s;cursor:pointer;}
+  .nav-links a:hover,.nav-links a.active{color:var(--text);}
+  .nav-cta{background:var(--accent);color:#0a0a0f;border:none;padding:9px 20px;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:opacity 0.2s;}
+  .nav-cta:hover{opacity:0.85;}
+  .api-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);}
+  .api-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);}
+  .api-dot.online{background:var(--safe);box-shadow:0 0 6px var(--safe);}
+  .api-dot.offline{background:var(--risk);}
+
+  /* LAYOUT */
+  .layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 65px);position:relative;z-index:1;}
+
+  /* SIDEBAR */
+  aside{border-right:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;gap:4px;position:sticky;top:65px;height:calc(100vh - 65px);overflow-y:auto;}
+  .sidebar-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:14px 12px 6px;}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all 0.15s;color:var(--text2);font-size:14px;font-weight:500;border:1px solid transparent;}
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:var(--accent-dim);color:var(--accent);border-color:rgba(232,255,71,0.18);}
+  .nav-item .icon{font-size:16px;width:20px;text-align:center;}
+  .nav-item .badge{margin-left:auto;background:var(--accent);color:#0a0a0f;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;font-family:'DM Mono',monospace;}
+
+  /* MAIN */
+  main{padding:32px 36px;overflow-y:auto;}
+  .page{display:none;}
+  .page.active{display:block;animation:fadein 0.3s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+  .page-header{margin-bottom:28px;}
+  .page-header h1{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-0.5px;margin-bottom:5px;}
+  .page-header p{color:var(--text2);font-size:14px;}
+
+  /* CARDS */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:22px;}
+  .card-sm{padding:16px 18px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+
+  /* STAT CARDS */
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px 20px;}
+  .stat-label{font-size:11px;color:var(--text2);font-weight:500;margin-bottom:7px;letter-spacing:0.3px;}
+  .stat-value{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:-1px;}
+  .stat-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;margin-top:6px;}
+  .badge-green{background:var(--safe-bg);color:var(--safe);}
+  .badge-yellow{background:var(--warn-bg);color:var(--warn);}
+  .badge-red{background:var(--risk-bg);color:var(--risk);}
+
+  /* FORMS */
+  .form-group{margin-bottom:16px;}
+  label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;letter-spacing:0.3px;text-transform:uppercase;font-family:'DM Mono',monospace;}
+  input,select,textarea{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;color:var(--text);padding:10px 14px;font-size:14px;font-family:'Instrument Sans',sans-serif;outline:none;transition:border-color 0.2s;}
+  input:focus,select:focus{border-color:var(--accent);}
+  select{appearance:none;cursor:pointer;}
+  input::placeholder{color:var(--text3);}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all 0.2s;border:none;letter-spacing:0.2px;}
+  .btn-primary{background:var(--accent);color:#0a0a0f;}
+  .btn-primary:hover{opacity:0.85;transform:translateY(-1px);}
+  .btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border2);}
+  .btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-full{width:100%;justify-content:center;}
+
+  /* SECTION TITLE */
+  .section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+  .stag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-dim);color:var(--accent);font-family:'DM Mono',monospace;}
+
+  /* DIVIDER */
+  .divider{height:1px;background:var(--border);margin:20px 0;}
+
+  /* PROGRESS */
+  .progress-item{margin-bottom:14px;}
+  .progress-label{display:flex;justify-content:space-between;font-size:13px;font-weight:500;margin-bottom:6px;}
+  .progress-val{color:var(--text2);font-family:'DM Mono',monospace;font-size:12px;}
+  .progress-track{height:5px;background:var(--surface2);border-radius:99px;overflow:hidden;}
+  .progress-fill{height:100%;border-radius:99px;transition:width 1s ease;}
+  .fill-green{background:var(--safe);}
+  .fill-yellow{background:var(--warn);}
+  .fill-red{background:var(--risk);}
+  .fill-accent{background:var(--accent);}
+  .fill-blue{background:var(--accent2);}
+
+  /* TIMELINE */
+  .timeline{display:flex;flex-direction:column;gap:0;}
+  .timeline-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);}
+  .timeline-item:last-child{border-bottom:none;}
+  .timeline-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px;}
+  .dot-green{background:var(--safe-bg);}
+  .dot-yellow{background:var(--warn-bg);}
+  .dot-red{background:var(--risk-bg);}
+  .timeline-title{font-weight:600;font-size:14px;margin-bottom:3px;}
+  .timeline-desc{font-size:13px;color:var(--text2);margin-bottom:4px;}
+  .timeline-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);}
+
+  /* TRUST RING */
+  .trust-score-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+  .ring-wrap{position:relative;width:150px;height:150px;margin-bottom:18px;}
+  .ring-wrap svg{transform:rotate(-90deg);}
+  .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .ring-score{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;line-height:1;letter-spacing:-2px;}
+  .ring-label{font-size:11px;color:var(--text2);margin-top:3px;font-weight:500;}
+
+  /* DETECTION CHIPS */
+  .detection-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+  .detection-chip{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid;}
+  .chip-ok{background:var(--safe-bg);color:var(--safe);border-color:rgba(71,255,140,0.2);}
+  .chip-warn{background:var(--warn-bg);color:var(--warn);border-color:rgba(255,212,71,0.2);}
+  .chip-bad{background:var(--risk-bg);color:var(--risk);border-color:rgba(255,71,71,0.2);}
+
+  /* ALERT */
+  .alert{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:12px;font-size:13px;margin-bottom:14px;}
+  .alert-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+  .alert-green{background:var(--safe-bg);border:1px solid rgba(71,255,140,0.2);}
+  .alert-yellow{background:var(--warn-bg);border:1px solid rgba(255,212,71,0.2);}
+  .alert-red{background:var(--risk-bg);border:1px solid rgba(255,71,71,0.2);}
+  .alert-title{font-weight:600;margin-bottom:2px;}
+  .alert-body{font-size:12px;color:var(--text2);}
+
+  /* LOADING */
+  .analyzing{display:none;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px;text-align:center;}
+  .analyzing.show{display:flex;}
+  .spinner{width:44px;height:44px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.75s linear infinite;margin-bottom:18px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .analyzing h3{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;}
+  .analyzing p{font-size:13px;color:var(--text2);}
+  .loading-steps{margin-top:16px;display:flex;flex-direction:column;gap:6px;}
+  .loading-step{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:8px;}
+  .loading-step.done{color:var(--safe);}
+  .loading-step.active{color:var(--accent);}
+
+  /* RESULT */
+  .result-panel{display:none;animation:fadein 0.4s ease;}
+  .result-panel.show{display:block;}
+
+  /* PRICE TABLE */
+  .price-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);font-size:14px;}
+  .price-row:last-child{border-bottom:none;}
+  .price-row-label{color:var(--text2);}
+  .price-row-val{font-weight:600;font-family:'DM Mono',monospace;font-size:13px;}
+  .price-highlight .price-row-label{color:var(--text);font-weight:600;}
+  .price-highlight .price-row-val{color:var(--accent);font-size:17px;font-family:'Syne',sans-serif;font-weight:800;}
+
+  /* TABLE */
+  .data-table{width:100%;border-collapse:collapse;}
+  .data-table th{text-align:left;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;padding:0 0 10px;border-bottom:1px solid var(--border);}
+  .data-table td{padding:12px 0;font-size:13px;border-bottom:1px solid var(--border);color:var(--text2);}
+  .data-table td:first-child{color:var(--text);}
+  .data-table tr:last-child td{border-bottom:none;}
+
+  /* FLAG BADGES */
+  .flag{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;}
+  .flag-ok{background:var(--safe-bg);color:var(--safe);}
+  .flag-warn{background:var(--warn-bg);color:var(--warn);}
+  .flag-bad{background:var(--risk-bg);color:var(--risk);}
+
+  /* SCORE PILL */
+  .score-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-weight:700;font-size:12px;font-family:'Syne',sans-serif;}
+
+  /* HERO */
+  .hero-dash{background:linear-gradient(135deg,#111118,#18181f);border:1px solid var(--border);border-radius:var(--r2);padding:28px;margin-bottom:22px;position:relative;overflow:hidden;}
+  .hero-dash::before{content:'🚗';position:absolute;right:28px;top:50%;transform:translateY(-50%);font-size:72px;opacity:0.07;}
+  .hero-dash h2{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-0.5px;margin-bottom:5px;}
+  .hero-dash p{color:var(--text2);font-size:13px;max-width:480px;}
+  .quick-search{display:flex;gap:10px;margin-top:18px;}
+  .quick-search input{flex:1;font-size:14px;}
+
+  /* MISC */
+  .mb-16{margin-bottom:16px;} .mb-20{margin-bottom:20px;} .mb-24{margin-bottom:24px;}
+  .mt-12{margin-top:12px;} .mt-16{margin-top:16px;} .mt-20{margin-top:20px;}
+  .text-dim{color:var(--text2);} .text-xs{font-size:12px;} .font-mono{font-family:'DM Mono',monospace;}
+  .flex{display:flex;} .items-center{align-items:center;} .justify-between{justify-content:space-between;}
+  .gap-8{gap:8px;} .gap-12{gap:12px;} .gap-16{gap:16px;} .gap-20{gap:20px;}
+
+  /* EMPTY STATE */
+  .empty-state{text-align:center;padding:60px 24px;color:var(--text3);}
+  .empty-state .icon{font-size:48px;margin-bottom:14px;}
+  .empty-state p{font-size:14px;line-height:1.6;}
+
+  /* RTO FOUND BANNER */
+  .rto-found{background:var(--safe-bg);border:1px solid rgba(71,255,140,0.2);border-radius:14px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;}
+  .rto-notfound{background:var(--warn-bg);border:1px solid rgba(255,212,71,0.2);border-radius:14px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;}
+
+  ::-webkit-scrollbar{width:5px;}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo"><div class="logo-mark">🔍</div> CarTrust <span>AI</span></div>
+  <div class="nav-links">
+    <a onclick="showPage('dashboard')" class="active" id="nl-dashboard">Dashboard</a>
+    <a onclick="showPage('verify')" id="nl-verify">Verify Car</a>
+    <a onclick="showPage('reports')" id="nl-reports">My Reports</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="api-status">
+      <div class="api-dot" id="apiDot"></div>
+      <span id="apiLabel">Connecting...</span>
+    </div>
+    <button class="nav-cta" onclick="showPage('verify')">+ New Verification</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="sidebar-label">Main</div>
+    <div class="nav-item active" id="si-dashboard" onclick="showPage('dashboard')"><span class="icon">📊</span> Dashboard</div>
+    <div class="nav-item" id="si-verify" onclick="showPage('verify')"><span class="icon">🔍</span> Verify Car <span class="badge">RTO</span></div>
+    <div class="nav-item" id="si-result" onclick="showPage('result')" style="display:none"><span class="icon">📋</span> Latest Result</div>
+    <div class="sidebar-label" style="margin-top:8px;">Tools</div>
+    <div class="nav-item" id="si-price" onclick="showPage('price')"><span class="icon">💰</span> Price Estimator</div>
+    <div class="nav-item" id="si-maintenance" onclick="showPage('maintenance')"><span class="icon">🔧</span> Maintenance</div>
+    <div class="sidebar-label" style="margin-top:8px;">History</div>
+    <div class="nav-item" id="si-reports" onclick="showPage('reports')"><span class="icon">📄</span> My Reports</div>
+  </aside>
+
+  <main>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p>Your car verification command center — connected to RTO database</p>
+      </div>
+
+      <div class="hero-dash">
+        <h2>Ready to verify a used car?</h2>
+        <p>Enter a license plate to instantly query the RTO database, get accident history, insurance status, and a CarTrust AI score.</p>
+        <div class="quick-search">
+          <input type="text" id="quickPlate" placeholder="Enter plate number (e.g. MH12AB1234)" style="text-transform:uppercase">
+          <button class="btn btn-primary" onclick="quickVerify()">🔍 Verify Now</button>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--text3)">
+          Try: <span style="color:var(--accent);cursor:pointer;font-family:'DM Mono',monospace" onclick="setPlate('MH12AB1234')">MH12AB1234</span> ·
+          <span style="color:var(--accent);cursor:pointer;font-family:'DM Mono',monospace" onclick="setPlate('TN09XX3456')">TN09XX3456</span> ·
+          <span style="color:var(--accent);cursor:pointer;font-family:'DM Mono',monospace" onclick="setPlate('GJ01XX2233')">GJ01XX2233</span>
+        </div>
+      </div>
+
+      <div class="grid-4 mb-24" id="dash-stats">
+        <div class="stat-card">
+          <div class="stat-label">Checks Run</div>
+          <div class="stat-value" id="st-count">—</div>
+          <div class="stat-badge badge-green">This session</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg Trust Score</div>
+          <div class="stat-value" id="st-avg">—</div>
+          <div class="stat-badge badge-yellow" id="st-avg-badge">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Risky Cars</div>
+          <div class="stat-value" id="st-risky" style="color:var(--risk)">—</div>
+          <div class="stat-badge badge-red">Flagged</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Safe Buys</div>
+          <div class="stat-value" id="st-safe" style="color:var(--safe)">—</div>
+          <div class="stat-badge badge-green">Verified</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Recent Verifications <span class="stag">LIVE</span></div>
+        <div id="dash-recent">
+          <div class="empty-state"><div class="icon">🚗</div><p>No verifications yet this session.<br>Run your first check above!</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VERIFY PAGE -->
+    <div class="page" id="page-verify">
+      <div class="page-header">
+        <h1>Verify a Car</h1>
+        <p>RTO database lookup + AI scoring + price estimation in one click</p>
+      </div>
+
+      <div class="grid-2" style="gap:24px;align-items:start;">
+        <!-- FORM -->
+        <div>
+          <div class="card mb-20">
+            <div class="section-title">RTO Lookup <span class="stag">LIVE DATABASE</span></div>
+            <div class="form-group">
+              <label>License Plate Number *</label>
+              <input type="text" id="v-plate" placeholder="e.g. MH12AB1234" style="text-transform:uppercase;font-size:16px;letter-spacing:1px" oninput="this.value=this.value.toUpperCase()">
+            </div>
+            <button class="btn btn-secondary btn-full" onclick="lookupRTO()" id="rtoBtn">🔍 Look Up RTO Database</button>
+          </div>
+
+          <div id="rto-result-box" style="display:none">
+            <!-- Populated by JS -->
+          </div>
+
+          <div class="card mb-20" id="manual-form">
+            <div class="section-title">Car Details <span style="font-size:11px;color:var(--text3);font-weight:400;margin-left:4px">(auto-filled from RTO or enter manually)</span></div>
+            <div class="grid-2" style="gap:12px">
+              <div class="form-group">
+                <label>Make (Brand)</label>
+                <select id="v-make">
+                  <option value="">Select</option>
+                  <option>Honda</option><option>Maruti Suzuki</option><option>Hyundai</option>
+                  <option>Toyota</option><option>Tata</option><option>Ford</option>
+                  <option>BMW</option><option>Mercedes</option><option>Mahindra</option><option>Kia</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Model</label>
+                <input type="text" id="v-model" placeholder="e.g. City, Swift">
+              </div>
+            </div>
+            <div class="grid-2" style="gap:12px">
+              <div class="form-group">
+                <label>Year</label>
+                <select id="v-year">
+                  <option value="">Select</option>
+                  <script>for(let y=2024;y>=2010;y--) document.write(`<option>${y}</option>`)</script>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Mileage (km)</label>
+                <input type="number" id="v-mileage" placeholder="e.g. 38500">
+              </div>
+            </div>
+            <div class="grid-2" style="gap:12px">
+              <div class="form-group">
+                <label>Fuel Type</label>
+                <select id="v-fuel">
+                  <option>Petrol</option><option>Diesel</option><option>CNG</option><option>Electric</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Transmission</label>
+                <select id="v-trans">
+                  <option>Manual</option><option>Automatic</option><option>CVT</option><option>AMT</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid-2" style="gap:12px">
+              <div class="form-group">
+                <label>Asking Price (₹)</label>
+                <input type="number" id="v-price" placeholder="e.g. 720000">
+              </div>
+              <div class="form-group">
+                <label>Condition</label>
+                <select id="v-condition">
+                  <option value="excellent">Excellent</option>
+                  <option value="good" selected>Good</option>
+                  <option value="fair">Fair</option>
+                  <option value="poor">Poor</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>City</label>
+              <input type="text" id="v-city" placeholder="e.g. Mumbai">
+            </div>
+            <button class="btn btn-primary btn-full" onclick="runFullVerification()" id="analyzeBtn">
+              🚀 Run Full AI Verification
+            </button>
+          </div>
+        </div>
+
+        <!-- RESULTS -->
+        <div>
+          <div class="analyzing" id="analyzing-box">
+            <div class="spinner"></div>
+            <h3>Analyzing Car...</h3>
+            <p>Querying RTO database and running AI models</p>
+            <div class="loading-steps">
+              <div class="loading-step" id="step1">🔍 Querying RTO database...</div>
+              <div class="loading-step" id="step2">📋 Processing history events...</div>
+              <div class="loading-step" id="step3">💰 Running price estimation...</div>
+              <div class="loading-step" id="step4">🤖 Calculating Trust Score...</div>
+              <div class="loading-step" id="step5">💾 Saving to database...</div>
+            </div>
+          </div>
+
+          <div class="result-panel" id="result-panel">
+            <!-- Filled by JS -->
+          </div>
+
+          <div class="empty-state" id="verify-empty">
+            <div class="icon">🔍</div>
+            <p>Enter a plate number and fill in car details,<br>then click <strong style="color:var(--text2)">Run Full AI Verification</strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULT DETAIL PAGE -->
+    <div class="page" id="page-result">
+      <div class="page-header">
+        <h1 id="result-car-title">Verification Result</h1>
+        <p id="result-car-sub">Full analysis report</p>
+      </div>
+      <div id="result-detail-content"></div>
+    </div>
+
+    <!-- PRICE ESTIMATOR -->
+    <div class="page" id="page-price">
+      <div class="page-header">
+        <h1>Price Estimator</h1>
+        <p>Rule-based ML price estimation using depreciation model</p>
+      </div>
+      <div class="grid-2" style="gap:24px">
+        <div class="card">
+          <div class="section-title">Input Details</div>
+          <div class="form-group"><label>Make</label>
+            <select id="p-make"><option value="">Select</option><option>Honda</option><option>Maruti Suzuki</option><option>Hyundai</option><option>Toyota</option><option>Tata</option><option>Ford</option><option>BMW</option><option>Mahindra</option></select>
+          </div>
+          <div class="form-group"><label>Model</label><input type="text" id="p-model" placeholder="e.g. City"></div>
+          <div class="grid-2" style="gap:12px">
+            <div class="form-group"><label>Year</label><select id="p-year"><script>for(let y=2024;y>=2010;y--) document.write(`<option>${y}</option>`)</script></select></div>
+            <div class="form-group"><label>Mileage (km)</label><input type="number" id="p-mileage" placeholder="38000"></div>
+          </div>
+          <div class="grid-2" style="gap:12px">
+            <div class="form-group"><label>Fuel</label><select id="p-fuel"><option>Petrol</option><option>Diesel</option></select></div>
+            <div class="form-group"><label>Transmission</label><select id="p-trans"><option>Manual</option><option>Automatic</option><option>CVT</option></select></div>
+          </div>
+          <div class="form-group"><label>Condition</label><select id="p-cond"><option value="excellent">Excellent</option><option value="good" selected>Good</option><option value="fair">Fair</option><option value="poor">Poor</option></select></div>
+          <button class="btn btn-primary btn-full" onclick="runPriceEstimate()">💰 Estimate Price</button>
+        </div>
+        <div id="price-result-box">
+          <div class="empty-state"><div class="icon">💰</div><p>Fill in car details and click<br><strong style="color:var(--text2)">Estimate Price</strong></p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAINTENANCE PAGE -->
+    <div class="page" id="page-maintenance">
+      <div class="page-header">
+        <h1>Maintenance Predictor</h1>
+        <p>Predict annual maintenance cost and upcoming services</p>
+      </div>
+      <div class="grid-2" style="gap:24px">
+        <div class="card">
+          <div class="section-title">Car Details</div>
+          <div class="form-group"><label>Make</label><select id="m-make"><option value="">Select</option><option>Honda</option><option>Maruti Suzuki</option><option>Hyundai</option><option>Toyota</option><option>Tata</option><option>Ford</option><option>BMW</option></select></div>
+          <div class="form-group"><label>Model</label><input type="text" id="m-model" placeholder="e.g. City"></div>
+          <div class="grid-2" style="gap:12px">
+            <div class="form-group"><label>Year</label><select id="m-year"><script>for(let y=2024;y>=2010;y--) document.write(`<option>${y}</option>`)</script></select></div>
+            <div class="form-group"><label>Mileage (km)</label><input type="number" id="m-mileage" placeholder="38000"></div>
+          </div>
+          <div class="form-group"><label>Fuel Type</label><select id="m-fuel"><option>Petrol</option><option>Diesel</option><option>CNG</option></select></div>
+          <button class="btn btn-primary btn-full" onclick="runMaintPredict()">🔧 Predict Maintenance</button>
+        </div>
+        <div id="maint-result-box">
+          <div class="empty-state"><div class="icon">🔧</div><p>Fill in details and click<br><strong style="color:var(--text2)">Predict Maintenance</strong></p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS PAGE -->
+    <div class="page" id="page-reports">
+      <div class="page-header">
+        <h1>My Reports</h1>
+        <p>All car verifications from this session</p>
+      </div>
+      <div class="card" id="reports-content">
+        <div class="empty-state"><div class="icon">📄</div><p>No reports yet. Run a verification first!</p></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ============================================================
+// CONFIG — Change this to your backend URL
+// ============================================================
+const API_BASE = 'http://localhost:3001/api';
+const SESSION_ID = 'sess_' + Math.random().toString(36).slice(2, 10);
+
+// Local store
+let sessionVerifications = [];
+let latestResult = null;
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + name)?.classList.add('active');
+  document.getElementById('si-' + name)?.classList.add('active');
+  document.getElementById('nl-' + name)?.classList.add('active');
+}
+
+// ============================================================
+// API HEALTH CHECK
+// ============================================================
+async function checkAPIHealth() {
+  const dot = document.getElementById('apiDot');
+  const label = document.getElementById('apiLabel');
+  try {
+    const r = await fetch(API_BASE + '/health', { signal: AbortSignal.timeout(3000) });
+    if (r.ok) {
+      dot.className = 'api-dot online';
+      label.textContent = 'API Online';
+    } else throw new Error();
+  } catch {
+    dot.className = 'api-dot offline';
+    label.textContent = 'API Offline (demo mode)';
+  }
+}
+checkAPIHealth();
+setInterval(checkAPIHealth, 30000);
+
+// ============================================================
+// HELPER: Format currency
+// ============================================================
+function fmt(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
+function fmtKm(n) { return Number(n).toLocaleString('en-IN') + ' km'; }
+
+// ============================================================
+// QUICK VERIFY from dashboard
+// ============================================================
+function setPlate(p) { document.getElementById('quickPlate').value = p; }
+function quickVerify() {
+  const p = document.getElementById('quickPlate').value.trim();
+  if (!p) return;
+  document.getElementById('v-plate').value = p.toUpperCase();
+  showPage('verify');
+  setTimeout(lookupRTO, 200);
+}
+
+// ============================================================
+// RTO LOOKUP
+// ============================================================
+async function lookupRTO() {
+  const plate = document.getElementById('v-plate').value.trim().toUpperCase().replace(/\s/g,'');
+  if (!plate) { alert('Please enter a plate number'); return; }
+
+  const btn = document.getElementById('rtoBtn');
+  btn.disabled = true; btn.textContent = '🔍 Looking up...';
+
+  try {
+    const r = await fetch(`${API_BASE}/rto/${plate}`);
+    const data = await r.json();
+    renderRTOResult(data, plate);
+  } catch(e) {
+    // Demo mode — simulate response
+    const demo = getDemoRTO(plate);
+    renderRTOResult(demo, plate);
+  } finally {
+    btn.disabled = false; btn.textContent = '🔍 Look Up RTO Database';
+  }
+}
+
+function renderRTOResult(data, plate) {
+  const box = document.getElementById('rto-result-box');
+  box.style.display = 'block';
+
+  if (data.found) {
+    const v = data.vehicle;
+    const flags = data.flags || {};
+
+    // Auto-fill form
+    setFormField('v-make', v.make);
+    setFormField('v-model', v.model);
+    setFormField('v-year', v.year);
+    setFormField('v-fuel', v.fuel_type);
+    setFormField('v-trans', v.transmission);
+    if (v.registered_at) document.getElementById('v-city').value = v.registered_at;
+
+    const flagsHtml = [
+      flags.is_stolen ? `<span class="flag flag-bad">🚨 STOLEN</span>` : `<span class="flag flag-ok">✓ Not Stolen</span>`,
+      flags.has_loan ? `<span class="flag flag-warn">🏦 Loan Active</span>` : `<span class="flag flag-ok">✓ No Loan</span>`,
+      flags.insurance_expired ? `<span class="flag flag-bad">❌ Insurance Expired</span>` : `<span class="flag flag-ok">✓ Insurance Valid</span>`,
+      flags.pollution_expired ? `<span class="flag flag-warn">⚠ PUC Expired</span>` : `<span class="flag flag-ok">✓ PUC Valid</span>`,
+      v.owner_count > 1 ? `<span class="flag flag-warn">👤 ${v.owner_count} Owners</span>` : `<span class="flag flag-ok">👤 1st Owner</span>`,
+    ].join(' ');
+
+    box.innerHTML = `
+      <div class="rto-found mb-20">
+        <div style="font-size:22px">✅</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--safe)">Found in RTO Database</div>
+          <div style="font-size:13px;color:var(--text2)">${v.make} ${v.model} ${v.year} · ${v.color} · ${v.registered_state}</div>
+        </div>
+      </div>
+      <div class="card mb-20">
+        <div class="section-title" style="margin-bottom:10px">RTO Data <span class="stag">LIVE</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">${flagsHtml}</div>
+        <table class="data-table">
+          <tr><td>Registered Owner</td><td style="text-align:right;font-weight:600;color:var(--text)">${v.owner_name}</td></tr>
+          <tr><td>Registration Date</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${v.registration_date || '—'}</td></tr>
+          <tr><td>Insurance Valid Till</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${v.insurance_valid_until || '—'}</td></tr>
+          <tr><td>PUC Valid Till</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${v.pollution_valid_until || '—'}</td></tr>
+          <tr><td>VIN / Chassis</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">${v.vin || '—'}</td></tr>
+        </table>
+        ${data.events?.length ? `<div class="divider"></div>
+        <div style="font-size:12px;color:var(--text2)">📋 ${data.events.length} history events found · ${data.events.filter(e=>e.severity==='danger').length} critical</div>` : ''}
+      </div>
+    `;
+  } else {
+    box.innerHTML = `
+      <div class="rto-notfound mb-20">
+        <div style="font-size:22px">⚠️</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--warn)">Not Found in RTO Database</div>
+          <div style="font-size:13px;color:var(--text2)">Plate ${plate} not in our mock database. Fill details manually below.</div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+function setFormField(id, val) {
+  const el = document.getElementById(id);
+  if (!el || !val) return;
+  if (el.tagName === 'SELECT') {
+    [...el.options].forEach(o => { if (o.value == val || o.text == val) el.value = o.value; });
+  } else el.value = val;
+}
+
+// ============================================================
+// FULL VERIFICATION
+// ============================================================
+async function runFullVerification() {
+  const plate = document.getElementById('v-plate').value.trim().toUpperCase();
+  const make = document.getElementById('v-make').value;
+  const model = document.getElementById('v-model').value;
+  const year = document.getElementById('v-year').value;
+  const mileage = document.getElementById('v-mileage').value;
+  const fuel = document.getElementById('v-fuel').value;
+  const trans = document.getElementById('v-trans').value;
+  const price = document.getElementById('v-price').value;
+  const condition = document.getElementById('v-condition').value;
+  const city = document.getElementById('v-city').value;
+
+  if (!plate || !make || !model || !year) {
+    alert('Please fill in: plate number, make, model, and year');
+    return;
+  }
+
+  // Show loader
+  document.getElementById('verify-empty').style.display = 'none';
+  document.getElementById('result-panel').classList.remove('show');
+  document.getElementById('analyzing-box').classList.add('show');
+
+  const steps = ['step1','step2','step3','step4','step5'];
+  let stepIdx = 0;
+  const stepInterval = setInterval(() => {
+    if (stepIdx < steps.length) {
+      document.getElementById(steps[stepIdx]).classList.add('active');
+      if (stepIdx > 0) document.getElementById(steps[stepIdx-1]).classList.remove('active');
+      stepIdx++;
+    }
+  }, 500);
+
+  try {
+    const r = await fetch(`${API_BASE}/analyze-car`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plate_number: plate,
+        make, model, year: parseInt(year),
+        mileage_km: parseInt(mileage) || 0,
+        fuel_type: fuel, transmission: trans,
+        asking_price: parseInt(price) || 0,
+        condition, city, session_id: SESSION_ID
+      })
+    });
+    const data = await r.json();
+    clearInterval(stepInterval);
+    showVerificationResult(data);
+  } catch(e) {
+    clearInterval(stepInterval);
+    // Demo mode
+    const demo = buildDemoResult(plate, make, model, year, mileage, fuel, trans, price, condition);
+    showVerificationResult(demo);
+  }
+}
+
+function showVerificationResult(data) {
+  document.getElementById('analyzing-box').classList.remove('show');
+  const panel = document.getElementById('result-panel');
+  panel.classList.add('show');
+
+  latestResult = data;
+  sessionVerifications.unshift(data);
+  document.getElementById('si-result').style.display = 'flex';
+
+  const s = data.scores || {};
+  const p = data.price || {};
+  const rto = data.rto || {};
+  const sum = data.summary || {};
+
+  const verdictColor = s.verdict === 'safe' ? 'var(--safe)' : s.verdict === 'moderate' ? 'var(--warn)' : 'var(--risk)';
+  const verdictClass = s.verdict === 'safe' ? 'alert-green' : s.verdict === 'moderate' ? 'alert-yellow' : 'alert-red';
+  const trustPct = (s.trust_score || 0) / 100;
+  const circumference = 2 * Math.PI * 60;
+  const dashoffset = circumference * (1 - trustPct);
+
+  panel.innerHTML = `
+    <div class="card mb-16">
+      <div class="flex items-center justify-between mb-16">
+        <div class="section-title" style="margin:0">CarTrust Score™</div>
+        <span style="background:${verdictColor}22;color:${verdictColor};padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700">${sum.verdict_label || ''}</span>
+      </div>
+      <div class="trust-score-wrap">
+        <div class="ring-wrap">
+          <svg width="150" height="150" viewBox="0 0 150 150">
+            <circle cx="75" cy="75" r="60" fill="none" stroke="var(--surface2)" stroke-width="9"/>
+            <circle cx="75" cy="75" r="60" fill="none" stroke="${verdictColor}" stroke-width="9"
+              stroke-dasharray="${circumference.toFixed(1)}" stroke-dashoffset="${dashoffset.toFixed(1)}" stroke-linecap="round"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-score" style="color:${verdictColor}">${s.trust_score || '—'}</div>
+            <div class="ring-label">out of 100</div>
+          </div>
+        </div>
+        <div class="grid-3" style="width:100%;gap:10px;text-align:center;margin-bottom:8px">
+          <div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:3px">History</div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--safe)">${s.history_score ?? '—'}</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:3px">Condition</div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--warn)">${s.condition_score ?? '—'}</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:3px">Price</div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--accent2)">${s.price_score ?? '—'}</div>
+          </div>
+        </div>
+      </div>
+      <div class="alert ${verdictClass}">
+        <div class="alert-icon">${s.verdict === 'safe' ? '✅' : s.verdict === 'moderate' ? '⚠️' : '🚨'}</div>
+        <div>
+          <div class="alert-title">${sum.verdict_label || ''}</div>
+          <div class="alert-body">${sum.recommendation || ''}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2 mb-16" style="gap:12px">
+      <div class="card card-sm" style="background:var(--safe-bg);border-color:rgba(71,255,140,0.18)">
+        <div style="font-size:10px;color:var(--safe);font-family:'DM Mono',monospace;font-weight:600;margin-bottom:6px">FAIR PRICE</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--safe)">${p.estimated_price ? fmt(p.estimated_price) : '—'}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">Range: ${p.range_low ? fmt(p.range_low) : '—'} – ${p.range_high ? fmt(p.range_high) : '—'}</div>
+      </div>
+      <div class="card card-sm">
+        <div style="font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;font-weight:600;margin-bottom:6px">ANNUAL MAINT.</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px">${data.maintenance?.annual_cost ? fmt(data.maintenance.annual_cost) : '—'}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">Next service: ${data.maintenance?.km_to_service ? fmtKm(data.maintenance.km_to_service) : '—'}</div>
+      </div>
+    </div>
+
+    ${rto.events?.length ? `
+    <div class="card mb-16">
+      <div class="section-title">History Events <span class="stag">${rto.events.length} EVENTS</span></div>
+      <div class="timeline">
+        ${rto.events.slice(0,4).map(e => `
+          <div class="timeline-item">
+            <div class="timeline-dot ${e.severity==='danger'?'dot-red':e.severity==='warning'?'dot-yellow':'dot-green'}">
+              ${e.event_type==='accident'?'💥':e.event_type==='service'?'🔧':e.event_type==='insurance_claim'?'📋':e.event_type==='ownership'?'👤':'ℹ️'}
+            </div>
+            <div>
+              <div class="timeline-title">${e.title}</div>
+              <div class="timeline-desc">${e.description || ''} ${e.cost_inr ? `· ${fmt(e.cost_inr)}` : ''}</div>
+              <div class="timeline-date">${e.event_date}</div>
+            </div>
+          </div>
+        `).join('')}
+        ${rto.events.length > 4 ? `<div style="font-size:12px;color:var(--text3);padding:12px 0">+${rto.events.length - 4} more events</div>` : ''}
+      </div>
+    </div>` : ''}
+
+    <button class="btn btn-secondary btn-full" onclick="viewFullResult()">📋 View Full Detailed Report →</button>
+  `;
+
+  updateDashboard();
+}
+
+function viewFullResult() {
+  if (!latestResult) return;
+  buildFullResultPage(latestResult);
+  showPage('result');
+}
+
+function buildFullResultPage(data) {
+  const s = data.scores || {};
+  const p = data.price || {};
+  const m = data.maintenance || {};
+  const rto = data.rto || {};
+  const v = rto.data || {};
+
+  document.getElementById('result-car-title').textContent = data.summary?.car || 'Verification Result';
+  document.getElementById('result-car-sub').textContent = `Plate: ${data.plate || rto.data?.plate_number || '—'} · Score: ${s.trust_score}/100`;
+
+  const flags = rto.flags || {};
+
+  document.getElementById('result-detail-content').innerHTML = `
+    <div class="grid-2 mb-24" style="gap:24px">
+      <div>
+        <div class="card mb-20">
+          <div class="section-title">Vehicle Information <span class="stag">RTO</span></div>
+          <table class="data-table">
+            <tr><td>Make / Model</td><td style="text-align:right;font-weight:600;color:var(--text)">${v.make || '—'} ${v.model || '—'}</td></tr>
+            <tr><td>Year</td><td style="text-align:right;font-weight:600;color:var(--text)">${v.year || '—'}</td></tr>
+            <tr><td>Color</td><td style="text-align:right">${v.color || '—'}</td></tr>
+            <tr><td>Fuel / Transmission</td><td style="text-align:right">${v.fuel_type || '—'} / ${v.transmission || '—'}</td></tr>
+            <tr><td>Registered In</td><td style="text-align:right">${v.registered_at || '—'}, ${v.registered_state || '—'}</td></tr>
+            <tr><td>Owner Name</td><td style="text-align:right;font-weight:600;color:var(--text)">${v.owner_name || '—'}</td></tr>
+            <tr><td>Owner Count</td><td style="text-align:right">${v.owner_count || '—'}</td></tr>
+            <tr><td>VIN</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">${v.vin || '—'}</td></tr>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Document Status</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="flex items-center justify-between">
+              <span style="font-size:13px">Insurance</span>
+              <span class="flag ${flags.insurance_expired ? 'flag-bad' : 'flag-ok'}">${flags.insurance_expired ? '❌ Expired' : '✓ Valid'} · ${v.insurance_valid_until || '—'}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span style="font-size:13px">PUC / Pollution</span>
+              <span class="flag ${flags.pollution_expired ? 'flag-warn' : 'flag-ok'}">${flags.pollution_expired ? '⚠ Expired' : '✓ Valid'} · ${v.pollution_valid_until || '—'}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span style="font-size:13px">Theft / Stolen</span>
+              <span class="flag ${flags.is_stolen ? 'flag-bad' : 'flag-ok'}">${flags.is_stolen ? '🚨 STOLEN' : '✓ Not Stolen'}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span style="font-size:13px">Loan / Hypothecation</span>
+              <span class="flag ${flags.has_loan ? 'flag-warn' : 'flag-ok'}">${flags.has_loan ? '⚠ Loan Active — ' + (v.loan_bank || '') : '✓ Clear Title'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card mb-20">
+          <div class="section-title">Price Analysis</div>
+          <div class="price-row"><span class="price-row-label">Base Market Value</span><span class="price-row-val">${p.breakdown?.base_value ? fmt(p.breakdown.base_value) : '—'}</span></div>
+          <div class="price-row"><span class="price-row-label">Age Depreciation</span><span class="price-row-val" style="color:var(--risk)">${p.breakdown?.age_depreciation ? fmt(p.breakdown.age_depreciation) : '—'}</span></div>
+          <div class="price-row"><span class="price-row-label">Mileage Depreciation</span><span class="price-row-val" style="color:var(--risk)">${p.breakdown?.mileage_depreciation ? fmt(p.breakdown.mileage_depreciation) : '—'}</span></div>
+          <div class="price-row"><span class="price-row-label">Seller Asking Price</span><span class="price-row-val" style="color:var(--warn)">${p.asking_price ? fmt(p.asking_price) : 'Not provided'}</span></div>
+          <div class="price-row price-highlight"><span class="price-row-label">Fair Estimated Value</span><span class="price-row-val">${p.estimated_price ? fmt(p.estimated_price) : '—'}</span></div>
+          ${p.overpriced_by && p.asking_price ? `<div class="alert ${p.overpriced_by > 0 ? 'alert-yellow' : 'alert-green'} mt-16">
+            <div class="alert-icon">${p.overpriced_by > 0 ? '💡' : '🎉'}</div>
+            <div>
+              <div class="alert-title">${p.overpriced_by > 0 ? `Overpriced by ${fmt(p.overpriced_by)}` : `Underpriced — Great Deal!`}</div>
+              <div class="alert-body">${p.overpriced_by > 0 ? 'Negotiate this amount off the asking price.' : 'This car is priced below market value.'}</div>
+            </div>
+          </div>` : ''}
+        </div>
+
+        <div class="card">
+          <div class="section-title">Maintenance Forecast</div>
+          <div class="progress-item"><div class="progress-label"><span>Annual Maintenance</span><span class="progress-val">${m.annual_cost ? fmt(m.annual_cost) : '—'}</span></div><div class="progress-track"><div class="progress-fill fill-yellow" style="width:60%"></div></div></div>
+          <div class="progress-item"><div class="progress-label"><span>Next Service In</span><span class="progress-val">${m.km_to_service ? fmtKm(m.km_to_service) : '—'}</span></div><div class="progress-track"><div class="progress-fill fill-blue" style="width:${Math.min(100, (m.km_to_service||0)/10000*100)}%"></div></div></div>
+          <div class="progress-item"><div class="progress-label"><span>Reliability</span><span class="progress-val" style="text-transform:capitalize">${m.reliability || '—'}</span></div><div class="progress-track"><div class="progress-fill fill-green" style="width:${m.reliability==='high'?90:m.reliability==='moderate'?60:40}%"></div></div></div>
+          <div style="font-size:12px;color:var(--text2);margin-top:8px">5-year total cost estimate: <strong style="color:var(--text)">${m.five_year_cost ? fmt(m.five_year_cost) : '—'}</strong></div>
+        </div>
+      </div>
+    </div>
+
+    ${rto.events?.length ? `<div class="card mb-24">
+      <div class="section-title">Full History Timeline <span class="stag">${rto.events.length} EVENTS</span></div>
+      <div class="timeline">
+        ${rto.events.map(e => `
+          <div class="timeline-item">
+            <div class="timeline-dot ${e.severity==='danger'?'dot-red':e.severity==='warning'?'dot-yellow':'dot-green'}">
+              ${e.event_type==='accident'?'💥':e.event_type==='service'?'🔧':e.event_type==='insurance_claim'?'📋':e.event_type==='ownership'?'👤':'ℹ️'}
+            </div>
+            <div>
+              <div class="timeline-title">${e.title}</div>
+              <div class="timeline-desc">${e.description || ''}</div>
+              <div class="timeline-date">${e.event_date} ${e.odometer_km ? '· ' + fmtKm(e.odometer_km) : ''} ${e.cost_inr ? '· ' + fmt(e.cost_inr) : ''}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+
+    ${m.upcoming_services?.length ? `<div class="card">
+      <div class="section-title">Upcoming Services</div>
+      <table class="data-table">
+        <thead><tr><th>Service</th><th>At (km)</th><th>Est. Cost</th><th>Priority</th></tr></thead>
+        <tbody>
+          ${m.upcoming_services.map(s => `<tr>
+            <td>${s.service}</td>
+            <td style="font-family:'DM Mono',monospace;font-size:11px">${fmtKm(s.km)}</td>
+            <td style="font-family:'DM Mono',monospace;font-size:11px">${fmt(s.cost)}</td>
+            <td><span style="font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;background:${s.urgency==='urgent'?'var(--risk-bg)':s.urgency==='moderate'?'var(--warn-bg)':'var(--safe-bg)'};color:${s.urgency==='urgent'?'var(--risk)':s.urgency==='moderate'?'var(--warn)':'var(--safe)'}">${s.urgency}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : ''}
+  `;
+}
+
+// ============================================================
+// PRICE ESTIMATOR
+// ============================================================
+async function runPriceEstimate() {
+  const body = {
+    make: document.getElementById('p-make').value,
+    model: document.getElementById('p-model').value,
+    year: document.getElementById('p-year').value,
+    mileage: document.getElementById('p-mileage').value,
+    fuel_type: document.getElementById('p-fuel').value,
+    transmission: document.getElementById('p-trans').value,
+    condition: document.getElementById('p-cond').value,
+  };
+  if (!body.make || !body.model) { alert('Please fill make and model'); return; }
+
+  const box = document.getElementById('price-result-box');
+  box.innerHTML = '<div class="analyzing show"><div class="spinner"></div><h3>Estimating...</h3></div>';
+
+  try {
+    const r = await fetch(`${API_BASE}/predict-price`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const d = await r.json();
+    renderPriceResult(d, box);
+  } catch {
+    const d = buildDemoPrice(body);
+    renderPriceResult(d, box);
+  }
+}
+
+function renderPriceResult(d, box) {
+  box.innerHTML = `
+    <div class="card mb-16">
+      <div class="section-title">Fair Market Value <span class="stag">ML MODEL</span></div>
+      <div style="text-align:center;padding:20px 0">
+        <div style="font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;margin-bottom:8px">ESTIMATED FAIR PRICE</div>
+        <div style="font-family:'Syne',sans-serif;font-size:40px;font-weight:800;color:var(--safe);letter-spacing:-2px">${fmt(d.estimated_price)}</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:6px">Market range: ${fmt(d.range_low)} — ${fmt(d.range_high)}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">Price Breakdown</div>
+      ${Object.entries(d.breakdown || {}).map(([k,v]) => `
+        <div class="price-row">
+          <span class="price-row-label">${k.replace(/_/g,' ')}</span>
+          <span class="price-row-val" style="color:${v<0?'var(--risk)':v>0?'var(--safe)':'var(--text)'}">${fmt(v)}</span>
+        </div>`).join('')}
+      <div class="price-row price-highlight"><span class="price-row-label">Final Estimate</span><span class="price-row-val">${fmt(d.estimated_price)}</span></div>
+    </div>
+  `;
+}
+
+// ============================================================
+// MAINTENANCE PREDICTOR
+// ============================================================
+async function runMaintPredict() {
+  const body = {
+    make: document.getElementById('m-make').value,
+    model: document.getElementById('m-model').value,
+    year: document.getElementById('m-year').value,
+    mileage: document.getElementById('m-mileage').value,
+    fuel_type: document.getElementById('m-fuel').value,
+  };
+  if (!body.make || !body.model) { alert('Please fill make and model'); return; }
+
+  const box = document.getElementById('maint-result-box');
+  box.innerHTML = '<div class="analyzing show"><div class="spinner"></div><h3>Predicting...</h3></div>';
+
+  try {
+    const r = await fetch(`${API_BASE}/predict-maintenance`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const d = await r.json();
+    renderMaintResult(d, box);
+  } catch {
+    const d = buildDemoMaint(body);
+    renderMaintResult(d, box);
+  }
+}
+
+function renderMaintResult(d, box) {
+  box.innerHTML = `
+    <div class="grid-2 mb-16" style="gap:12px">
+      <div class="stat-card"><div class="stat-label">Annual Cost</div><div class="stat-value" style="color:var(--warn)">${fmt(d.annual_cost)}</div></div>
+      <div class="stat-card"><div class="stat-label">5-Year Total</div><div class="stat-value">${fmt(d.five_year_cost)}</div></div>
+    </div>
+    <div class="card mb-16">
+      <div class="section-title">Upcoming Services</div>
+      <table class="data-table">
+        <thead><tr><th>Service</th><th>At km</th><th>Cost</th></tr></thead>
+        <tbody>${(d.upcoming_services||[]).map(s=>`<tr><td>${s.service}</td><td style="font-family:'DM Mono',monospace;font-size:11px">${fmtKm(s.km)}</td><td style="font-family:'DM Mono',monospace;font-size:11px">${fmt(s.cost)}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="section-title">Known Issues</div>
+      ${(d.common_issues||[]).map(i=>`<div class="alert ${i.severity==='danger'?'alert-red':i.severity==='warning'?'alert-yellow':'alert-green'} mb-16"><div class="alert-icon">${i.severity==='info'?'ℹ️':'⚠️'}</div><div><div class="alert-title">${i.issue}</div><div class="alert-body">${i.note}</div></div></div>`).join('')}
+    </div>
+  `;
+}
+
+// ============================================================
+// DASHBOARD UPDATES
+// ============================================================
+function updateDashboard() {
+  const vs = sessionVerifications;
+  document.getElementById('st-count').textContent = vs.length;
+  if (vs.length > 0) {
+    const avg = Math.round(vs.reduce((s,v) => s + (v.scores?.trust_score||0), 0) / vs.length);
+    document.getElementById('st-avg').textContent = avg;
+    document.getElementById('st-avg-badge').textContent = avg >= 80 ? '✓ Good' : avg >= 60 ? 'Moderate' : 'Risky';
+    document.getElementById('st-risky').textContent = vs.filter(v => v.scores?.verdict === 'risky').length;
+    document.getElementById('st-safe').textContent = vs.filter(v => v.scores?.verdict === 'safe').length;
+  }
+
+  const recent = document.getElementById('dash-recent');
+  if (vs.length === 0) return;
+  recent.innerHTML = `<table class="data-table">
+    <thead><tr><th>Car</th><th>Plate</th><th>Score</th><th>Verdict</th><th></th></tr></thead>
+    <tbody>
+      ${vs.map((v,i) => {
+        const s = v.scores || {};
+        const sc = s.trust_score;
+        const vd = s.verdict;
+        const color = vd==='safe'?'var(--safe)':vd==='moderate'?'var(--warn)':'var(--risk)';
+        return `<tr>
+          <td>${v.summary?.car || '—'}</td>
+          <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">${v.rto?.data?.plate_number || '—'}</td>
+          <td><span class="score-pill" style="background:${color}22;color:${color}">${sc ?? '—'}</span></td>
+          <td><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:${color}22;color:${color}">${vd||'—'}</span></td>
+          <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="viewResultAtIndex(${i})">View</button></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+
+  // Update reports page
+  document.getElementById('reports-content').innerHTML = recent.innerHTML;
+}
+
+function viewResultAtIndex(i) {
+  latestResult = sessionVerifications[i];
+  buildFullResultPage(latestResult);
+  showPage('result');
+}
+
+// ============================================================
+// DEMO MODE (when backend is offline)
+// ============================================================
+function getDemoRTO(plate) {
+  const vehicles = {
+    'MH12AB1234': { found:true, vehicle:{ plate_number:'MH12AB1234', vin:'MRHFB6550NP100001', make:'Honda', model:'City', year:2021, fuel_type:'Petrol', transmission:'Automatic', color:'Lunar Silver', registered_at:'Mumbai', registered_state:'Maharashtra', owner_name:'Rahul Sharma', owner_count:1, registration_date:'2021-03-15', insurance_valid_until:'2026-03-14', pollution_valid_until:'2025-10-15', is_stolen:false, has_loan:false }, events:[
+      {event_type:'ownership',event_date:'2021-03-15',title:'Original Purchase',description:'Purchased new from Honda dealer, Andheri Mumbai.',cost_inr:1050000,severity:'info',odometer_km:0},
+      {event_type:'service',event_date:'2022-08-14',title:'Scheduled Service – 20,000 km',description:'Honda authorized. AC serviced.',cost_inr:4500,severity:'info',odometer_km:20000},
+      {event_type:'insurance_claim',event_date:'2023-01-09',title:'Minor Insurance Claim',description:'Left rear bumper replaced. No structural damage.',cost_inr:12000,severity:'warning',odometer_km:28500},
+    ], flags:{insurance_expired:false,pollution_expired:false,is_stolen:false,has_loan:false,multiple_owners:false} },
+    'TN09XX3456': { found:true, vehicle:{ plate_number:'TN09XX3456', make:'Hyundai', model:'i20', year:2018, fuel_type:'Petrol', transmission:'Manual', color:'Fiery Red', registered_at:'Chennai', registered_state:'Tamil Nadu', owner_name:'Muthu Krishnan', owner_count:3, registration_date:'2018-05-28', insurance_valid_until:'2024-05-27', pollution_valid_until:'2024-12-27', is_stolen:false, has_loan:true, loan_bank:'HDFC Bank' }, events:[
+      {event_type:'accident',event_date:'2020-04-11',title:'Major Accident – Front Collision',description:'Front airbags deployed. Bonnet, radiator replaced.',cost_inr:95000,severity:'danger',odometer_km:15000},
+      {event_type:'ownership',event_date:'2021-02-28',title:'2nd Ownership Transfer',description:'Title transferred to 2nd owner.',cost_inr:0,severity:'warning',odometer_km:32000},
+      {event_type:'ownership',event_date:'2022-11-14',title:'3rd Ownership Transfer',description:'Title transferred to 3rd owner.',cost_inr:0,severity:'warning',odometer_km:51000},
+    ], flags:{insurance_expired:true,pollution_expired:true,is_stolen:false,has_loan:true,multiple_owners:true} },
+  };
+  return vehicles[plate] || { found:false, plate_number:plate };
+}
+
+function buildDemoResult(plate, make, model, year, mileage, fuel, trans, price, condition) {
+  const rtoData = getDemoRTO(plate);
+  const v = rtoData.vehicle || {};
+  const carMake = v.make || make;
+  const carModel = v.model || model;
+  const carYear = v.year || parseInt(year);
+  const m = parseInt(mileage) || 0;
+  const ap = parseInt(price) || 0;
+
+  // Simple scoring
+  let hist = 95;
+  (rtoData.events||[]).forEach(e => { if(e.severity==='danger') hist-=30; if(e.severity==='warning') hist-=8; });
+  if(rtoData.flags?.has_loan) hist-=15;
+  hist = Math.max(0, Math.min(100, hist));
+  const cond = condition === 'excellent' ? 95 : condition === 'good' ? 80 : condition === 'fair' ? 60 : 40;
+  const trust = Math.round(hist*0.45 + cond*0.3 + 85*0.25);
+  const verdict = trust >= 80 ? 'safe' : trust >= 60 ? 'moderate' : 'risky';
+
+  const priceRes = buildDemoPrice({ make:carMake, model:carModel, year:carYear, mileage:m, fuel_type:fuel, transmission:trans, condition });
+  const maintRes = buildDemoMaint({ make:carMake, model:carModel, year:carYear, mileage:m, fuel_type:fuel });
+
+  return {
+    scores:{ trust_score:trust, history_score:hist, condition_score:cond, price_score:85, verdict },
+    price:{ ...priceRes, asking_price:ap, overpriced_by: ap - priceRes.estimated_price },
+    rto:{ found: rtoData.found, data: v, events: rtoData.events||[], flags: rtoData.flags||{} },
+    maintenance: maintRes,
+    summary: {
+      car: `${carMake} ${carModel} ${carYear}`,
+      verdict_label: verdict==='safe'?'✅ Safe to Buy':verdict==='moderate'?'⚠️ Moderate Risk':'🚨 Risky — Avoid',
+      recommendation: verdict==='safe'?'This car looks like a solid purchase. Proceed with confidence.':verdict==='moderate'?'Some concerns found. Negotiate and get a mechanic inspection.':'Significant issues detected. Avoid or deep-inspect before purchase.',
+    }
+  };
+}
+
+function buildDemoPrice({ make, model, year, mileage, fuel_type, transmission, condition }) {
+  const bases = { 'Honda City':1100000,'Maruti Suzuki Swift':720000,'Toyota Innova Crysta':1950000,'Hyundai i20':800000,'Tata Nexon':940000,'BMW 3 Series':5500000 };
+  const key = `${make} ${model}`;
+  let base = bases[key] || 800000;
+  const age = new Date().getFullYear() - (year||2020);
+  base *= (1 - Math.min(0.70, age*0.15));
+  const excess = Math.max(0, (mileage||0) - age*12000);
+  base -= excess * 1.2;
+  if(fuel_type==='Diesel') base*=1.05;
+  if(transmission==='Automatic'||transmission==='CVT') base*=1.04;
+  const condm = {excellent:1.05,good:1.0,fair:0.90,poor:0.78};
+  base *= (condm[condition]||1.0);
+  base = Math.max(50000, Math.round(base/1000)*1000);
+  return { estimated_price:base, range_low:Math.round(base*0.93/1000)*1000, range_high:Math.round(base*1.07/1000)*1000, breakdown:{ base_value: bases[key]||800000, age_depreciation:-Math.round((bases[key]||800000)*Math.min(0.70,age*0.15)), mileage_depreciation:-Math.round(excess*1.2) } };
+}
+
+function buildDemoMaint({ make, model, year, mileage, fuel_type }) {
+  const age = new Date().getFullYear() - (year||2020);
+  const isLux = ['BMW','Mercedes','Audi'].includes(make);
+  let cost = isLux ? 45000 : fuel_type==='Diesel' ? 22000 : 16000;
+  if((mileage||0) > 80000) cost *= 1.4;
+  const next = Math.ceil((mileage||0)/10000)*10000;
+  return {
+    annual_cost: Math.round(cost), five_year_cost: Math.round(cost*5), reliability: isLux?'moderate':(mileage||0)>80000?'moderate':'high',
+    km_to_service: next - (mileage||0), next_service_km: next,
+    upcoming_services:[{service:`${next}k Service`,km:next,cost:next%40000===0?9000:4500,urgency:'urgent'},{service:'Engine Oil',km:next,cost:2800,urgency:'moderate'},{service:'Brake Fluid',km:(mileage||0)+15000,cost:1200,urgency:'low'}],
+    common_issues:[{issue:'Regular Oil Changes',note:'Most critical item. Every 5-10k km.',severity:'info'},{issue:'Tire Check',note:'Check pressure monthly. Uneven wear = alignment issue.',severity:'info'}]
+  };
+}
+</script>
+</body>
+</html>
