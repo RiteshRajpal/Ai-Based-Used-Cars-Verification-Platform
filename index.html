@@ -21,7 +21,7 @@
   body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
   body::before{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:900px;height:600px;background:radial-gradient(ellipse,rgba(232,255,71,0.04) 0%,transparent 70%);pointer-events:none;z-index:0;}
 
-  /* NAV */
+  
   nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 40px;background:rgba(10,10,15,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
   .logo{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-0.5px;}
   .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
@@ -36,10 +36,10 @@
   .api-dot.online{background:var(--safe);box-shadow:0 0 6px var(--safe);}
   .api-dot.offline{background:var(--risk);}
 
-  /* LAYOUT */
+  
   .layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 65px);position:relative;z-index:1;}
 
-  /* SIDEBAR */
+  
   aside{border-right:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;gap:4px;position:sticky;top:65px;height:calc(100vh - 65px);overflow-y:auto;}
   .sidebar-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:14px 12px 6px;}
   .nav-item{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all 0.15s;color:var(--text2);font-size:14px;font-weight:500;border:1px solid transparent;}
@@ -48,7 +48,7 @@
   .nav-item .icon{font-size:16px;width:20px;text-align:center;}
   .nav-item .badge{margin-left:auto;background:var(--accent);color:#0a0a0f;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;font-family:'DM Mono',monospace;}
 
-  /* MAIN */
+ 
   main{padding:32px 36px;overflow-y:auto;}
   .page{display:none;}
   .page.active{display:block;animation:fadein 0.3s ease;}
