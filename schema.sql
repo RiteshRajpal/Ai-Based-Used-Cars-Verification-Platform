@@ -1,5 +1,5 @@
 
--- CarTrust AI — Full Database Schema
+
 -- Run this in your Supabase SQL editor
 -- ============================================================
 
