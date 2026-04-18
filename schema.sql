@@ -33,9 +33,7 @@ CREATE TABLE IF NOT EXISTS public.rto_vehicles (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ============================================================
--- TABLE: car_history_events
--- ============================================================
+
 CREATE TABLE IF NOT EXISTS public.car_history_events (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   plate_number TEXT NOT NULL,
