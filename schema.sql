@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS public.car_history_events (
   title TEXT NOT NULL,
   description TEXT,
   cost_inr INTEGER,
-  severity TEXT DEFAULT 'info',  -- 'info','warning','danger'
+  severity TEXT DEFAULT 'info', 
   odometer_km INTEGER,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
