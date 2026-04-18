@@ -8,9 +8,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ============================================================
--- TABLE: rto_vehicles  (mock RTO database)
--- ============================================================
+
 CREATE TABLE IF NOT EXISTS public.rto_vehicles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   plate_number TEXT UNIQUE NOT NULL,
