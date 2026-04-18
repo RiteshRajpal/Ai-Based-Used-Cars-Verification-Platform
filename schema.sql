@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS public.rto_vehicles (
   transmission TEXT DEFAULT 'Manual',
   color TEXT,
   engine_cc INTEGER,
-  registered_at TEXT,  -- city
+  registered_at TEXT,  
   registered_state TEXT,
   owner_name TEXT,
   owner_count INTEGER DEFAULT 1,
