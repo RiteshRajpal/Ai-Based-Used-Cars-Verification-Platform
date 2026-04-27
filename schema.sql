@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS public.car_verifications (
   transmission TEXT,
   asking_price_inr INTEGER,
   city TEXT,
-  -- AI computed scores
+ 
   trust_score INTEGER,
   history_score INTEGER,
   condition_score INTEGER,
