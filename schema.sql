@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS public.car_history_events (
 CREATE TABLE IF NOT EXISTS public.car_verifications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
-  session_id TEXT,  -- for anonymous users
+  session_id TEXT,  
   plate_number TEXT NOT NULL,
   vin TEXT,
   make TEXT,
