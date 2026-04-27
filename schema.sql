@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS public.car_verifications (
   estimated_price_inr INTEGER,
   price_range_low INTEGER,
   price_range_high INTEGER,
-  -- Condition
+ 
   condition_issues JSONB DEFAULT '[]',
   repair_cost_inr INTEGER,
   -- Maintenance
