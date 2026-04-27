@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS public.car_verifications (
   history_score INTEGER,
   condition_score INTEGER,
   price_score INTEGER,
-  verdict TEXT,  -- 'safe','moderate','risky'
+  verdict TEXT,
   -- Price estimation
   estimated_price_inr INTEGER,
   price_range_low INTEGER,
