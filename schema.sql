@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS public.car_verifications (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ============================================================
+
 -- TABLE: condition_analyses
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.condition_analyses (
