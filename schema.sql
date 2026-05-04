@@ -96,7 +96,6 @@ CREATE TABLE IF NOT EXISTS public.condition_analyses (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ============================================================
 -- TABLE: maintenance_predictions
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.maintenance_predictions (
