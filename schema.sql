@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS public.car_verifications (
   
   annual_maint_cost INTEGER,
   next_service_km INTEGER,
-  -- Raw data snapshot
+
   rto_data JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
