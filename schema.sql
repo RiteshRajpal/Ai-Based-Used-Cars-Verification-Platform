@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS public.car_verifications (
  
   condition_issues JSONB DEFAULT '[]',
   repair_cost_inr INTEGER,
-  -- Maintenance
+  
   annual_maint_cost INTEGER,
   next_service_km INTEGER,
   -- Raw data snapshot
