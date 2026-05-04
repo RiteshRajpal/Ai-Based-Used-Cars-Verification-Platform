@@ -85,7 +85,6 @@ CREATE TABLE IF NOT EXISTS public.car_verifications (
 
 
 
--- ============================================================
 CREATE TABLE IF NOT EXISTS public.condition_analyses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   verification_id UUID REFERENCES public.car_verifications(id) ON DELETE CASCADE,
