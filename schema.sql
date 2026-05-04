@@ -95,8 +95,6 @@ CREATE TABLE IF NOT EXISTS public.condition_analyses (
   image_count INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
--- ============================================================
 CREATE TABLE IF NOT EXISTS public.maintenance_predictions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   verification_id UUID REFERENCES public.car_verifications(id) ON DELETE CASCADE,
