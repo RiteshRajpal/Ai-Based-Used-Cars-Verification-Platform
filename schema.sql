@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS public.car_verifications (
 );
 
 
--- TABLE: condition_analyses
+
 -- ============================================================
 CREATE TABLE IF NOT EXISTS public.condition_analyses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
